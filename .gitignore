@@ -1,0 +1,26 @@
+# Agent configurations
+.agent/
+
+# Python Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Streamlit Cache & Config
+.streamlit/*
+!.streamlit/config.toml
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+
+# Project-specific logs
+*.log
