@@ -1,127 +1,140 @@
 # 📊 Painel Histórico de Inflação Brasileira (IPCA)
-### Projeto Acadêmico de Ciência de Dados & Estrutura de Dados
+### Dashboard Interativo · Ciência de Dados · Python · Streamlit · API IBGE
 
-> **Status do Projeto:** Concluído✅
-
----
-
-## 🎯 Tema do Projeto e Justificativa
-
-**Tema:** Análise da Trajetória Composta e Variação Anual da Inflação Brasileira (IPCA) entre 2016 e 2025.
-
-**Justificativa:** 
-A inflação é um indicador macroeconômico essencial para medir a estabilidade monetária de um país e a variação do custo de vida. Compreender o comportamento do Índice Nacional de Preços ao Consumidor Amplo (IPCA), calculado pelo IBGE, é crucial para análises econômicas acadêmicas e de mercado. 
-
-Este projeto propõe uma abordagem científica para visualizar e calcular não apenas as variações pontuais anuais da inflação, mas também o **fator composto acumulado** ao longo da última década. Esse cálculo permite avaliar o efeito cumulativo de corrosão do poder de compra da moeda brasileira (Real) de forma interativa e visualmente polida.
+> **Status do Projeto:** Concluído ✅ &nbsp;|&nbsp; **Linguagem:** Python 3 &nbsp;|&nbsp; **Interface:** Streamlit &nbsp;|&nbsp; **Dados:** IBGE/SIDRA API
 
 ---
 
-## 💾 Fonte de Dados (API) e Descrição
+## 📌 Sobre o Projeto
 
-**Fonte dos Dados (API):** API SIDRA do IBGE (Sistema IBGE de Recuperação Automática).
-- **Tabela:** 1737 (IPCA - Série histórica de variação mensal)
-- **Variável:** 63 (IPCA - Variação mensal)
-- **Frequência:** Mensal, últimos 144 meses (12 anos)
-- **Nível Territorial:** Brasil
+Dashboard interativo desenvolvido como **projeto acadêmico de Ciência de Dados** que analisa a trajetória da inflação brasileira (IPCA) entre **2016 e 2025**, calculando tanto as variações anuais quanto o **fator de inflação composta acumulada** ao longo da última década.
 
-**Descrição do Pipeline:**
-O projeto implementa uma arquitetura desacoplada e escalável (ETL - Extração, Transformação e Carga):
-1. **Extração (`src/extracao_ibge.py`):** Conecta-se à API do IBGE via biblioteca `sidrapy` e realiza o download dos dados brutos. Se a API estiver fora do ar ou apresentar instabilidade, um **mecanismo de fallback off-line** com a base histórica consolidada é acionado de forma resiliente, gerando `data/ipca_bruto.csv`.
-2. **Transformação (`src/transformacao.py`):** Consome os dados brutos, filtra e converte tipos, ordena cronologicamente e computa o fator de inflação anual composto (multiplicação acumulada) de 10 anos completos, salvando em `data/ipca_limpo.csv`.
-3. **Visualização (`app.py`):** Interface Streamlit otimizada que consome unicamente os dados tratados e limpos, permitindo plotagem interativa e filtragem instantânea sem requisições de rede redundantes.
+O projeto implementa um pipeline **ETL completo** com consumo da **API SIDRA do IBGE**, transformação dos dados com **Pandas** e visualização interativa com **Plotly** e **Streamlit**. Um mecanismo de fallback offline garante resiliência mesmo sem acesso à rede.
 
 ---
 
-## ❓ Perguntas-Chave (Insights Acadêmicos)
+## 🎯 Objetivos e Perguntas-Chave
 
-1. **Choque Inflacionário Anual:** Quais anos registraram os maiores desvios da meta de inflação e quais fatores (como desorganizações de cadeias globais de suprimentos ou reajustes tarifários) explicaram esses picos?
-2. **Perda Acumulada de Valor:** De quanto foi a perda acumulada real do poder de compra ao longo dos 10 anos analisados (fator de inflação composta acumulada)?
-3. **Padrão Mensal de Crise:** Qual foi a média inflacionária mensal em anos de inflação controlada versus anos que registraram dois dígitos de inflação?
+1. **Choque Inflacionário Anual** — Quais anos registraram os maiores desvios da meta e quais fatores (cadeias de suprimentos, reajustes tarifários) explicaram esses picos?
+2. **Perda Acumulada de Poder de Compra** — Qual foi a desvalorização real do Real brasileiro ao longo dos 10 anos analisados?
+3. **Padrão Mensal de Crise** — Qual a média inflacionária em anos de inflação controlada versus anos de dois dígitos?
 
 ---
 
-## 💻 Tecnologias e Ferramentas Utilizadas
+## 💾 Fonte de Dados
 
-Este projeto atende a todos os requisitos acadêmicos propostos utilizando as seguintes tecnologias:
-- **Linguagem:** Python 3 (PEP 484 type hints e PEP 257 docstrings)
-- **Interface e Dashboard:** Streamlit (Layout SaaS Premium com CSS sutil)
-- **Manipulação de Dados:** Pandas (Vetorização matemática)
-- **Visualização de Dados:** Plotly (Gráficos interativos responsivos)
-- **Consumo de API:** `sidrapy` (Interface com SIDRA/IBGE)
+| Campo | Detalhe |
+|---|---|
+| **API** | [SIDRA/IBGE](https://apisidra.ibge.gov.br/) — Sistema IBGE de Recuperação Automática |
+| **Tabela** | 1737 — IPCA Série Histórica de Variação Mensal |
+| **Variável** | 63 — Variação Mensal (%) |
+| **Cobertura** | Últimos 144 meses · Brasil · Mensal |
+| **Biblioteca** | `sidrapy` |
+
+---
+
+## 🏗️ Arquitetura do Pipeline (ETL)
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  Pipeline de Dados                   │
+├──────────────┬──────────────────┬───────────────────┤
+│  Extração    │  Transformação   │  Visualização     │
+│  (IBGE API)  │  (Pandas/Cálculo)│  (Streamlit/Plot.)│
+│              │                  │                   │
+│ sidrapy  ──► │ ipca_bruto.csv   │ ipca_limpo.csv ──►│
+│ fallback CSV │ fator composto   │ Dashboard UI      │
+└──────────────┴──────────────────┴───────────────────┘
+```
+
+1. **`src/extracao_ibge.py`** — Conecta à API SIDRA, baixa os dados brutos; aciona fallback CSV se a API estiver indisponível → `data/ipca_bruto.csv`
+2. **`src/transformacao.py`** — Filtra, converte tipos, ordena cronologicamente e calcula o fator de inflação composta anual → `data/ipca_limpo.csv`
+3. **`app.py`** — Interface Streamlit que consome somente os dados tratados, com plotagem interativa e filtragem instantânea
+
+---
+
+## 💻 Stack Tecnológico
+
+| Tecnologia | Uso |
+|---|---|
+| **Python 3** | Linguagem principal (PEP 484 type hints · PEP 257 docstrings) |
+| **Streamlit** | Dashboard interativo e interface SaaS |
+| **Pandas** | Manipulação e vetorização matemática dos dados |
+| **Plotly** | Gráficos interativos e responsivos |
+| **sidrapy** | Consumo da API SIDRA/IBGE |
 
 ---
 
 ## 📂 Estrutura do Repositório
 
 ```
-projeto_ipca_brasil/
-├── .agent/
-│   ├── rules/
-│   │   └── prompt.md            # Regras do agente de IA
-│   └── skills/
-│       └── SKILL.md             # Definição e diretrizes das skills integradas
+projeto-cd-ed/
 ├── data/
-│   ├── ipca_bruto.csv           # Backup exato do retorno da API / Fallback
-│   └── ipca_limpo.csv           # Dados consolidados prontos para leitura na UI
+│   ├── ipca_bruto.csv           # Backup da API / Fallback offline
+│   └── ipca_limpo.csv           # Dados transformados prontos para o dashboard
 ├── src/
-│   ├── extracao_ibge.py         # Script ETL de Extração da API SIDRA
-│   └── transformacao.py         # Script ETL de Limpeza e Cálculo de Fator Composto
-├── .gitignore                   # Arquivos ignorados no Git
-├── app.py                       # Interface Streamlit de Visualização SaaS Premium
-├── README.md                    # Manual do projeto e documentação acadêmica
-└── requirements.txt             # Dependências de execução
+│   ├── extracao_ibge.py         # ETL — Extração via API SIDRA
+│   └── transformacao.py         # ETL — Limpeza e cálculo do fator composto
+├── .streamlit/
+│   └── config.toml              # Configurações do Streamlit
+├── app.py                       # Dashboard Streamlit principal
+├── requirements.txt             # Dependências Python
+└── README.md                    # Documentação do projeto
 ```
 
 ---
 
-## ⚙️ Como Executar o Projeto Localmente
+## 🚀 Como Executar Localmente
 
-Siga os passos abaixo para rodar o dashboard na sua máquina:
+**Pré-requisitos:** Python 3.8+
 
-1. **Clone este repositório:**
-   ```bash
-   git clone https://github.com/matheusrueda/projeto-cd-ed.git
-   cd projeto-cd-ed
-   ```
+```bash
+# 1. Clone o repositório
+git clone https://github.com/matheusrueda/projeto-cd-ed.git
+cd projeto-cd-ed
 
-2. **Crie e ative um ambiente virtual (recomendado):**
-   ```bash
-   # Windows (PowerShell)
-   python -m venv venv
-   .\venv\Scripts\Activate.ps1
+# 2. Crie e ative um ambiente virtual
+python -m venv venv
+source venv/bin/activate          # Linux/Mac
+# .\venv\Scripts\Activate.ps1    # Windows (PowerShell)
 
-   # Linux/Mac
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
+# 3. Instale as dependências
+pip install -r requirements.txt
 
-3. **Instale as dependências:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+# 4. Execute o pipeline ETL
+python src/extracao_ibge.py
+python src/transformacao.py
 
-4. **Execute o pipeline de dados (ETL):**
-   ```bash
-   # Executa a extração
-   python src/extracao_ibge.py
-   
-   # Executa o processamento
-   python src/transformacao.py
-   ```
-
-5. **Inicie a interface Streamlit:**
-   ```bash
-   streamlit run app.py
-   ```
-   *O painel abrirá automaticamente no navegador em `http://localhost:8501`.*
+# 5. Inicie o dashboard
+streamlit run app.py
+# Acesse: http://localhost:8501
+```
 
 ---
 
-## 👥 Equipe Desenvolvedora
+## 👥 Equipe
 
-O grupo é formado por:
-- **Matheus**
-- **Luis**
-- **Henrique**
-- **Guilherme**
-- **João**
+| Nome | Papel |
+|---|---|
+| **Matheus** | Arquitetura do pipeline, ETL, Dashboard UI |
+| **Luis** | Análise de dados e transformações |
+| **Henrique** | Extração da API e fallback |
+| **Guilherme** | Visualização e Plotly |
+| **João** | Documentação e testes |
+
+---
+
+## 📄 Licença
+
+Projeto acadêmico — uso educacional. Consulte os membros da equipe para outros usos.
+
+---
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white" alt="Streamlit">
+  <img src="https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white" alt="Pandas">
+  <img src="https://img.shields.io/badge/Plotly-3F4F75?style=flat-square&logo=plotly&logoColor=white" alt="Plotly">
+  <img src="https://img.shields.io/badge/Dados-IBGE%2FSIDRA-009c3b?style=flat-square" alt="IBGE">
+  <img src="https://img.shields.io/badge/Status-Concluído-brightgreen?style=flat-square" alt="Status">
+</p>
