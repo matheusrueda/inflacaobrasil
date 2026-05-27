@@ -1,26 +1,30 @@
-# Agent configurations
+# Agentes locais
 .agent/
 
-# Python Virtual Environments
+# Ambiente Virtual Python
 .venv/
 venv/
 ENV/
 env/
 
-# Python Cache
+# Estudos e Testes Locais (Matheus)
+.understand-anything/
+.understandignore
+
+# Cache Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .pytest_cache/
 
-# Streamlit Cache & Config
+# Cache & Config do Streamlit
 .streamlit/*
 !.streamlit/config.toml
 
-# OS Metadata
+# Metadados do OS
 .DS_Store
 Thumbs.db
 
-# Project-specific logs
+# Logs do projeto
 *.log
