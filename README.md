@@ -1,17 +1,17 @@
-# 📊 Painel Histórico de Inflação (IPCA)
+#  Painel Histórico de Inflação (IPCA)
 
 Um dashboard interativo e dinâmico que analisa a inflação oficial do Brasil (IPCA) de **2016 a 2025**. O objetivo é traduzir índices econômicos complexos em um impacto compreensível no dia a dia, demonstrando a corrosão do poder de compra no bolso do brasileiro ao longo dos últimos 10 anos.
 
 ---
 
-## 💡 O que o painel responde?
+## O que o painel responde?
 * **O custo de vida aumentou quanto?** Veja o cálculo do fator de inflação acumulada e composta no período que você escolher.
 * **Qual foi o pico da inflação?** Identifique os anos mais críticos (como os impactos globais de 2021 e 2022).
 * **Como isso afeta meu bolso?** Utilize o **Simulador de Poder de Compra** para ver quanto custa hoje um item básico do passado (como um cafezinho ou uma cesta básica).
 
 ---
 
-## 🏗️ Como o projeto foi construído
+## Como o projeto foi construído
 Para garantir performance e manter a interface rápida, separamos o processamento dos dados da visualização final (arquitetura desacoplada):
 
 * **Extração (`src/extracao_ibge.py`):** Conecta à API SIDRA do IBGE para buscar os dados mensais brutos (Tabela 1737). Possui um teste de conectividade rápido (3s) com fallback local automático se a API estiver fora do ar.
@@ -20,7 +20,7 @@ Para garantir performance e manter a interface rápida, separamos o processament
 
 ---
 
-## 🚀 Como Executar Localmente
+## Como Executar Localmente
 
 ### Pré-requisito
 Ter o Python 3.8+ instalado em sua máquina.
@@ -52,7 +52,7 @@ streamlit run app.py
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 * **Python 3:** Linguagem base com tipagem estática nos scripts.
 * **Streamlit:** Interface web rápida e intuitiva.
 * **Pandas:** Manipulação matemática e agrupamento de dados.
@@ -62,7 +62,7 @@ streamlit run app.py
 
 ---
 
-## 👥 Equipe
+## Equipe
 * **Matheus** 
 * **Luis** 
 * **Henrique** 
@@ -79,3 +79,28 @@ streamlit run app.py
   <img src="https://img.shields.io/badge/Dados-IBGE%2FSIDRA-009c3b?style=flat-square" alt="IBGE">
   <img src="https://img.shields.io/badge/Status-Concluído-brightgreen?style=flat-square" alt="Status">
 </p>
+
+## Capturas de Tela
+
+O nosso dashboard é composto por uma única tela. Abaixo, dividimos a visualização em duas partes:
+
+**1. Panorama Geral (Topo da página)**
+*Este é o topo da página, com o contexto e explicações acerca do projeto.*
+
+<img width="1920" height="922" alt="Visão Geral do Dashboard" src="https://github.com/user-attachments/assets/fe783249-1d7c-4f7e-9c29-436544471840" />
+
+**2. Visualização Gráfica**
+*Rolando a tela para baixo, o usuário encontra o gráfico interativo com a evolução do IPCA ao longo dos anos e o simulador financeiro.*
+
+<img width="1510" height="569" alt="image" src="https://github.com/user-attachments/assets/312b7824-1a29-42a6-93a9-7d431557c402" />
+
+**3. Tabela de Dados Consolidados**
+*Parte inferior do painel, focada no gráfico de evolução da inflação ao longo do tempo e no impacto visual das crises.*
+
+<img width="1523" height="553" alt="image" src="https://github.com/user-attachments/assets/2fb50689-312a-4410-9eb2-12a31684d160" />
+
+
+**4. Análise Histórica & Crises**
+*Parte inferior do painel, focada no gráfico de evolução da inflação ao longo do tempo e no impacto visual das crises.*
+
+<img width="1522" height="599" alt="image" src="https://github.com/user-attachments/assets/bb69cbbf-aa09-4647-b3b7-de146925adcf" />
