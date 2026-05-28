@@ -62,24 +62,6 @@ streamlit run app.py
 
 ---
 
-## Equipe
-* **Matheus** 
-* **Luis** 
-* **Henrique** 
-* **Guilherme** 
-* **João**
-
----
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white" alt="Streamlit">
-  <img src="https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white" alt="Pandas">
-  <img src="https://img.shields.io/badge/Plotly-3F4F75?style=flat-square&logo=plotly&logoColor=white" alt="Plotly">
-  <img src="https://img.shields.io/badge/Dados-IBGE%2FSIDRA-009c3b?style=flat-square" alt="IBGE">
-  <img src="https://img.shields.io/badge/Status-Concluído-brightgreen?style=flat-square" alt="Status">
-</p>
-
 ## Capturas de Tela
 
 O nosso dashboard é composto por uma única tela. Abaixo, dividimos a visualização em duas partes:
@@ -104,3 +86,23 @@ O nosso dashboard é composto por uma única tela. Abaixo, dividimos a visualiza
 *Parte inferior do painel, focada no gráfico de evolução da inflação ao longo do tempo e no impacto visual das crises.*
 
 <img width="1522" height="599" alt="image" src="https://github.com/user-attachments/assets/bb69cbbf-aa09-4647-b3b7-de146925adcf" />
+
+---
+
+## Equipe
+* **Matheus** 
+* **Luis** 
+* **Henrique** 
+* **Guilherme** 
+* **João**
+
+---
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white" alt="Streamlit">
+  <img src="https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white" alt="Pandas">
+  <img src="https://img.shields.io/badge/Plotly-3F4F75?style=flat-square&logo=plotly&logoColor=white" alt="Plotly">
+  <img src="https://img.shields.io/badge/Dados-IBGE%2FSIDRA-009c3b?style=flat-square" alt="IBGE">
+  <img src="https://img.shields.io/badge/Status-Concluído-brightgreen?style=flat-square" alt="Status">
+</p>
