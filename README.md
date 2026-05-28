@@ -95,6 +95,8 @@ O nosso dashboard é composto por uma única tela. Abaixo, dividimos a visualiza
 * **Henrique** 
 * **Guilherme** 
 * **João**
+* **Luiz**
+
 
 ---
 

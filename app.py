@@ -133,7 +133,8 @@ else:
         "• Luis<br>"
         "• Henrique<br>"
         "• Guilherme<br>"
-        "• João"
+        "• João<br>"
+        "• Luiz"
         "</div>",
         unsafe_allow_html=True
     )
