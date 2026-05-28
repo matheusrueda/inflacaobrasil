@@ -2,11 +2,33 @@ import os
 import sys
 import logging
 import pandas as pd
+import requests
 import sidrapy
 
 # Configura o logging para acompanhamento do processo
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+def verificar_conectividade_ibge(timeout: float = 3.0) -> bool:
+    """
+    Verifica a conectividade rápida com o servidor da API SIDRA do IBGE.
+
+    Parameters
+    ----------
+    timeout : float
+        Limite de tempo para resposta em segundos (padrão: 3.0).
+
+    Returns
+    -------
+    bool
+        True se a conexão for estabelecida com sucesso, False caso contrário.
+    """
+    try:
+        requests.get("https://apisidra.ibge.gov.br", timeout=timeout)
+        return True
+    except Exception:
+        return False
+
 
 def obter_dados_fallback() -> pd.DataFrame:
     """
@@ -107,6 +129,10 @@ def extrair_dados_ipca(
         DataFrame contendo a tabela bruta (via API ou via fallback).
     """
     try:
+        logger.info("Testando conectividade com o servidor do IBGE...")
+        if not verificar_conectividade_ibge(timeout=3.0):
+            raise ConnectionError("O servidor da API SIDRA do IBGE está inacessível ou sem resposta rápida.")
+
         logger.info(
             f"Tentando extração da tabela {tabela}, variável {variavel} para o período {periodo}..."
         )

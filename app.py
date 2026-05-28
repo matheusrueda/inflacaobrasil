@@ -7,7 +7,7 @@ import os
 # 1. CONFIGURAÇÃO DA PÁGINA E ESTILOS
 st.set_page_config(
     page_title="Análise de Inflação - IPCA",
-    page_icon="📈",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -15,9 +15,6 @@ st.set_page_config(
 # Estilização CSS para visual limpo e legível (Dark Mode adaptado com Fira Code nos números)
 st.markdown("""
     <style>
-        /* Importação das fontes do Google Fonts */
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600;700&display=swap');
-        
         /* Ajuste de fontes globais no app */
         html, body, [class*="css"], .stMarkdown {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -97,7 +94,7 @@ df_ipca = carregar_dados(ARQUIVO_LIMPO)
 
 # 3. INTERFACE DE USUÁRIO (STREAMLIT)
 if df_ipca.empty:
-    st.error("❌ Base de dados local não encontrada!")
+    st.error("Base de dados local não encontrada!")
     st.info("Por favor, execute o pipeline de dados no terminal: `python src/extracao_ibge.py` seguido por `python src/transformacao.py`.")
 else:
     # Sidebar Acadêmica
@@ -112,7 +109,6 @@ else:
     st.sidebar.markdown(
         "<p style='color: #94a3b8; font-size: 0.85rem; line-height: 1.5;'>"
         "Este painel analisa a trajetória histórica da inflação oficial do país de forma interativa. "
-        "Desenvolvido de forma modular com pipeline ETL separado da camada de apresentação."
         "</p>",
         unsafe_allow_html=True
     )
@@ -143,7 +139,7 @@ else:
     )
     
     if not anos_selecionados:
-        st.warning("⚠️ Selecione pelo menos um ano na barra lateral para carregar as análises.")
+        st.warning("Selecione pelo menos um ano na barra lateral para carregar as análises.")
     else:
         # Filtra os dados com base na seleção
         df_filtrado = df_ipca[df_ipca["Ano"].isin(anos_selecionados)].copy()
@@ -192,8 +188,8 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # SEÇÃO NOVA: SIMULADOR DE PODER DE COMPRA (Humanização e Storytelling interativo)
-        st.markdown("### 🛒 O Impacto da Inflação no seu Bolso")
+        # SEÇÃO NOVA: SIMULADOR DE PODER DE COMPRA
+        st.markdown("### O Impacto da Inflação no seu Bolso")
         
         st.markdown(
             "<div class='simulador-card'>"
@@ -201,8 +197,8 @@ else:
             "Simulador Prático de Perda de Poder de Compra"
             "</p>"
             "<p style='color:#94a3b8; font-size:0.9rem; margin-bottom:15px; line-height:1.5;'>"
-            "Insira um valor em dinheiro que você possuía no início do período filtrado. O simulador calculará "
-            "o quanto de dinheiro você precisaria hoje para comprar a mesma cesta de produtos ou serviços, "
+            "Insira um valor em dinheiro no início do período filtrado. O simulador calculará "
+            "o quanto seria equivalente hoje, "
             "demonstrando visualmente o efeito da corrosão inflacionária."
             "</p>"
             "</div>",
@@ -210,12 +206,33 @@ else:
         )
         
         # Caixas do simulador lado a lado
-        s_col1, s_col2 = st.columns([1, 2])
+        s_col1, s_col2 = st.columns([1.2, 1.8])
         with s_col1:
+            exemplo_selecionado = st.selectbox(
+                "Escolha um exemplo real:",
+                options=[
+                    "Customizado (R$ 100)",
+                    "Cafezinho Simples (R$ 3,50)",
+                    "Almoço Comercial (R$ 25,00)",
+                    "Cesta Básica Familiar (R$ 400,00)",
+                    "Salário Mínimo de 2016 (R$ 880,00)"
+                ]
+            )
+            
+            valores_exemplo = {
+                "Customizado (R$ 100)": 100.0,
+                "Cafezinho Simples (R$ 3,50)": 3.50,
+                "Almoço Comercial (R$ 25,00)": 25.0,
+                "Cesta Básica Familiar (R$ 400,00)": 400.0,
+                "Salário Mínimo de 2016 (R$ 880,00)": 880.0
+            }
+            
+            valor_base = valores_exemplo[exemplo_selecionado]
+            
             valor_original = st.number_input(
-                "Valor de Referência (R$):",
-                min_value=1.0,
-                value=100.0,
+                "Ou digite outro valor (R$):",
+                min_value=0.1,
+                value=float(valor_base),
                 step=10.0,
                 help="Digite o valor que servirá de base histórica no início do período."
             )
@@ -225,16 +242,25 @@ else:
         ano_inicial = df_filtrado["Ano"].min()
         ano_final = df_filtrado["Ano"].max()
         
+        descricoes = {
+            "Customizado (R$ 100)": "Uma compra genérica",
+            "Cafezinho Simples (R$ 3,50)": "Aquele cafezinho rápido na padaria",
+            "Almoço Comercial (R$ 25,00)": "Um almoço comercial básico",
+            "Cesta Básica Familiar (R$ 400,00)": "A cesta de mantimentos e alimentos da família",
+            "Salário Mínimo de 2016 (R$ 880,00)": "A renda mensal equivalente a um salário mínimo da época"
+        }
+        item_nome = descricoes[exemplo_selecionado]
+        
         with s_col2:
             st.markdown(
                 f"<div style='margin-top: 10px;'>"
                 f"<p style='font-size: 1.05rem; line-height: 1.6; color: #f3f4f6;'>"
-                f"Uma compra que custava <strong>R$ {valor_original:.2f}</strong> em {ano_inicial}, custaria hoje em dia "
+                f"{item_nome} que custava <strong>R$ {valor_original:.2f}</strong> em {ano_inicial}, custaria aproximadamente "
                 f"<span style='color: #db2777; font-weight: 700; font-family: Fira Code;'>R$ {valor_necessario:.2f}</span> em {ano_final} "
-                f"para manter exatamente o mesmo padrão de consumo."
+                f"para manter exatamente o mesmo padrão de consumo de itens equivalentes."
                 f"</p>"
                 f"<p style='font-size: 0.9rem; color: #94a3b8; margin: 0;'>"
-                f"O seu dinheiro sofreu uma <strong>perda real de poder de compra de {perda_poder_compra:.1f}%</strong> durante este intervalo temporal."
+                f"Isso representa uma <strong>corrosão real de {perda_poder_compra:.1f}% no poder de compra</strong> do Real brasileiro durante este período."
                 f"</p>"
                 f"</div>",
                 unsafe_allow_html=True
@@ -242,7 +268,7 @@ else:
 
         st.markdown("<hr style='border: 0; height: 1px; background: rgba(255,255,255,0.05); margin-top: 25px; margin-bottom: 25px;'>", unsafe_allow_html=True)
 
-        # Abas Acadêmicas
+        # Abas
         tab_graficos, tab_tabela, tab_analise = st.tabs([
             "Visualização Gráfica", 
             "Tabela de Dados Consolidados", 
@@ -250,7 +276,7 @@ else:
         ])
 
         with tab_graficos:
-            # Gráficos em duas colunas (Layout SaaS Clean)
+            # Gráficos em duas colunas
             g_col1, g_col2 = st.columns(2)
 
             with g_col1:
@@ -266,7 +292,7 @@ else:
                     template="plotly_dark"
                 )
                 
-                # Customização visual do gráfico de barras para estilo SaaS premium dark
+                # Customização visual do gráfico de barras
                 fig_bar.update_traces(
                     marker_color="#2563eb",
                     texttemplate="%{text:.2f}%",
@@ -290,7 +316,7 @@ else:
                     height=380,
                     hovermode="x"
                 )
-                st.plotly_chart(fig_bar, use_container_width=True)
+                st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
             with g_col2:
                 st.markdown("<p style='font-weight: 700; font-size: 1.15rem; color: #f3f4f6; margin-bottom: 15px;'>Trajetória da Inflação Composta no Período</p>", unsafe_allow_html=True)
@@ -305,7 +331,7 @@ else:
                     labels={"Trajetoria_Composta": "Inflação Acumulada Composta (%)", "Ano": "Ano"},
                     template="plotly_dark"
                 )
-                # Customização visual da linha e área para estilo SaaS premium dark
+                # Customização visual da linha e área
                 fig_line.update_traces(
                     line_color="#db2777",
                     line_width=3,
@@ -342,7 +368,7 @@ else:
                     ),
                     height=380
                 )
-                st.plotly_chart(fig_line, use_container_width=True)
+                st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
 
         with tab_tabela:
             st.markdown("<p style='font-weight: 700; font-size: 1.15rem; color: #f3f4f6; margin-bottom: 15px;'>Tabela de Dados Consolidados</p>", unsafe_allow_html=True)
@@ -353,10 +379,10 @@ else:
             df_tabela["Acumulado_Ano"] = df_tabela["Acumulado_Ano"].map("{:.2f}%".format)
             df_tabela["Inflacao_Composta_Acumulada_Perc"] = df_tabela["Inflacao_Composta_Acumulada_Perc"].map("{:.2f}%".format)
             
-            # Remove colunas auxiliares temporárias antes de exibir
+            # Remove colunas auxiliares
             df_tabela = df_tabela.drop(columns=["Fator_Interno", "Trajetoria_Composta"])
 
-            # Renomeia colunas para a exibição ficar mais profissional e legível
+            # Renomeia colunas para a exibição
             df_tabela.columns = [
                 "Ano", 
                 "Média Inflação Mensal", 
@@ -372,7 +398,7 @@ else:
             )
 
         with tab_analise:
-            # Análise Histórica Contextual formatada elegantemente
+            # Análise Histórica Contextual formatada
             st.markdown("""
             <div style="background-color: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); padding: 25px; border-radius: 14px; margin-top: 10px;">
                 <h4 style="margin-top:0; color:#2563eb; font-weight:800; font-size:1.25rem;">Entendendo o Comportamento Inflacionário Recente</h4>

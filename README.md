@@ -1,132 +1,73 @@
-# 📊 Painel Histórico de Inflação Brasileira (IPCA)
-### Dashboard Interativo · Ciência de Dados · Python · Streamlit · API IBGE
+# 📊 Painel Histórico de Inflação (IPCA)
 
-> **Status do Projeto:** Concluído ✅ &nbsp;|&nbsp; **Linguagem:** Python 3 &nbsp;|&nbsp; **Interface:** Streamlit &nbsp;|&nbsp; **Dados:** IBGE/SIDRA API
-
----
-
-## 📌 Sobre o Projeto
-
-Dashboard interativo desenvolvido como **projeto acadêmico de Ciência de Dados** que analisa a trajetória da inflação brasileira (IPCA) entre **2016 e 2025**, calculando tanto as variações anuais quanto o **fator de inflação composta acumulada** ao longo da última década.
-
-O projeto implementa um pipeline **ETL completo** com consumo da **API SIDRA do IBGE**, transformação dos dados com **Pandas** e visualização interativa com **Plotly** e **Streamlit**. Um mecanismo de fallback offline garante resiliência mesmo sem acesso à rede.
+Um dashboard interativo e dinâmico que analisa a inflação oficial do Brasil (IPCA) de **2016 a 2025**. O objetivo é traduzir índices econômicos complexos em um impacto compreensível no dia a dia, demonstrando a corrosão do poder de compra no bolso do brasileiro ao longo dos últimos 10 anos.
 
 ---
 
-## 🎯 Objetivos e Perguntas-Chave
-
-1. **Choque Inflacionário Anual** — Quais anos registraram os maiores desvios da meta e quais fatores (cadeias de suprimentos, reajustes tarifários) explicaram esses picos?
-2. **Perda Acumulada de Poder de Compra** — Qual foi a desvalorização real do Real brasileiro ao longo dos 10 anos analisados?
-3. **Padrão Mensal de Crise** — Qual a média inflacionária em anos de inflação controlada versus anos de dois dígitos?
-
----
-
-## 💾 Fonte de Dados
-
-| Campo | Detalhe |
-|---|---|
-| **API** | [SIDRA/IBGE](https://apisidra.ibge.gov.br/) — Sistema IBGE de Recuperação Automática |
-| **Tabela** | 1737 — IPCA Série Histórica de Variação Mensal |
-| **Variável** | 63 — Variação Mensal (%) |
-| **Cobertura** | Últimos 144 meses · Brasil · Mensal |
-| **Biblioteca** | `sidrapy` |
+## 💡 O que o painel responde?
+* **O custo de vida aumentou quanto?** Veja o cálculo do fator de inflação acumulada e composta no período que você escolher.
+* **Qual foi o pico da inflação?** Identifique os anos mais críticos (como os impactos globais de 2021 e 2022).
+* **Como isso afeta meu bolso?** Utilize o **Simulador de Poder de Compra** para ver quanto custa hoje um item básico do passado (como um cafezinho ou uma cesta básica).
 
 ---
 
-## 🏗️ Arquitetura do Pipeline (ETL)
+## 🏗️ Como o projeto foi construído
+Para garantir performance e manter a interface rápida, separamos o processamento dos dados da visualização final (arquitetura desacoplada):
 
-```
-┌─────────────────────────────────────────────────────┐
-│                  Pipeline de Dados                   │
-├──────────────┬──────────────────┬───────────────────┤
-│  Extração    │  Transformação   │  Visualização     │
-│  (IBGE API)  │  (Pandas/Cálculo)│  (Streamlit/Plot.)│
-│              │                  │                   │
-│ sidrapy  ──► │ ipca_bruto.csv   │ ipca_limpo.csv ──►│
-│ fallback CSV │ fator composto   │ Dashboard UI      │
-└──────────────┴──────────────────┴───────────────────┘
-```
-
-1. **`src/extracao_ibge.py`** — Conecta à API SIDRA, baixa os dados brutos; aciona fallback CSV se a API estiver indisponível → `data/ipca_bruto.csv`
-2. **`src/transformacao.py`** — Filtra, converte tipos, ordena cronologicamente e calcula o fator de inflação composta anual → `data/ipca_limpo.csv`
-3. **`app.py`** — Interface Streamlit que consome somente os dados tratados, com plotagem interativa e filtragem instantânea
-
----
-
-## 💻 Stack Tecnológico
-
-| Tecnologia | Uso |
-|---|---|
-| **Python 3** | Linguagem principal (PEP 484 type hints · PEP 257 docstrings) |
-| **Streamlit** | Dashboard interativo e interface SaaS |
-| **Pandas** | Manipulação e vetorização matemática dos dados |
-| **Plotly** | Gráficos interativos e responsivos |
-| **sidrapy** | Consumo da API SIDRA/IBGE |
-
----
-
-## 📂 Estrutura do Repositório
-
-```
-projeto-cd-ed/
-├── data/
-│   ├── ipca_bruto.csv           # Backup da API / Fallback offline
-│   └── ipca_limpo.csv           # Dados transformados prontos para o dashboard
-├── src/
-│   ├── extracao_ibge.py         # ETL — Extração via API SIDRA
-│   └── transformacao.py         # ETL — Limpeza e cálculo do fator composto
-├── .streamlit/
-│   └── config.toml              # Configurações do Streamlit
-├── app.py                       # Dashboard Streamlit principal
-├── requirements.txt             # Dependências Python
-└── README.md                    # Documentação do projeto
-```
+* **Extração (`src/extracao_ibge.py`):** Conecta à API SIDRA do IBGE para buscar os dados mensais brutos (Tabela 1737). Possui um teste de conectividade rápido (3s) com fallback local automático se a API estiver fora do ar.
+* **Transformação (`src/transformacao.py`):** Processa os dados brutos usando Pandas, calculando os acumulados anuais e os fatores de multiplicação.
+* **Interface (`app.py`):** Dashboard construído com Streamlit, utilizando Plotly para gráficos fluidos e interativos.
 
 ---
 
 ## 🚀 Como Executar Localmente
 
-**Pré-requisitos:** Python 3.8+
+### Pré-requisito
+Ter o Python 3.8+ instalado em sua máquina.
+
+### Passo a Passo
 
 ```bash
-# 1. Clone o repositório
+# 1. Obter o repositório
 git clone https://github.com/matheusrueda/projeto-cd-ed.git
 cd projeto-cd-ed
 
-# 2. Crie e ative um ambiente virtual
+# 2. Criar e ativar o ambiente virtual (Recomendado)
 python -m venv venv
-source venv/bin/activate          # Linux/Mac
-# .\venv\Scripts\Activate.ps1    # Windows (PowerShell)
+# No Windows:
+.\venv\Scripts\activate
+# No Linux/Mac:
+source venv/bin/activate
 
-# 3. Instale as dependências
+# 3. Instalar as dependências
 pip install -r requirements.txt
 
-# 4. Execute o pipeline ETL
+# 4. Rodar o pipeline ETL (baixa e trata os dados)
 python src/extracao_ibge.py
 python src/transformacao.py
 
-# 5. Inicie o dashboard
+# 5. Iniciar o dashboard no navegador
 streamlit run app.py
-# Acesse: http://localhost:8501
 ```
 
 ---
 
-## 👥 Equipe
-
-| Nome | Papel |
-|---|---|
-| **Matheus** | Arquitetura do pipeline, ETL, Dashboard UI |
-| **Luis** | Análise de dados e transformações |
-| **Henrique** | Extração da API e fallback |
-| **Guilherme** | Visualização e Plotly |
-| **João** | Documentação e testes |
+## 🛠️ Tecnologias Utilizadas
+* **Python 3:** Linguagem base com tipagem estática nos scripts.
+* **Streamlit:** Interface web rápida e intuitiva.
+* **Pandas:** Manipulação matemática e agrupamento de dados.
+* **Plotly:** Gráficos interativos responsivos.
+* **sidrapy:** Cliente Python oficial para a API do IBGE.
+* **orjson:** Serialização JSON acelerada para renderização instantânea dos gráficos.
 
 ---
 
-## 📄 Licença
-
-Projeto acadêmico — uso educacional. Consulte os membros da equipe para outros usos.
+## 👥 Equipe
+* **Matheus** 
+* **Luis** 
+* **Henrique** 
+* **Guilherme** 
+* **João**
 
 ---
 

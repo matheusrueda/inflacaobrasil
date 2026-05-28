@@ -8,6 +8,7 @@ ENV/
 env/
 
 # Estudos e Testes Locais (Matheus)
+# Painel rodando em https://matheusrueda.github.io/projeto-cd-ed/
 .understand-anything/
 .understandignore
 
