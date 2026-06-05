@@ -5,7 +5,6 @@ import pandas as pd
 import sidrapy
 import requests
 import json
-from typing import Optional
 
 # Configura o logging para acompanhamento do processo
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
