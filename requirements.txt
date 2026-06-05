@@ -4,3 +4,4 @@ streamlit>=1.30.0
 plotly>=5.18.0
 orjson>=3.9.0
 
+tenacity>=8.0.0
