@@ -15,12 +15,15 @@ def processar_dados_ipca(
     Lê os dados brutos de IPCA, realiza o processamento e limpeza, calcula as métricas 
     anuais acumuladas e o fator composto, e salva o arquivo final limpo.
 
-    Parameters
-    ----------
-    caminho_bruto : str
-        Caminho para o arquivo CSV bruto (padrão: "data/ipca_bruto.csv").
-    caminho_limpo : str
-        Caminho onde os dados limpos e consolidados serão salvos (padrão: "data/ipca_limpo.csv").
+    Args:
+        caminho_bruto (str): Caminho para o arquivo CSV bruto (padrão: "data/ipca_bruto.csv").
+        caminho_limpo (str): Caminho onde os dados limpos e consolidados serão salvos (padrão: "data/ipca_limpo.csv").
+
+    Raises:
+        FileNotFoundError: Se o arquivo de dados brutos não for encontrado.
+        KeyError: Se as colunas necessárias não estiverem no DataFrame.
+        ValueError: Se houver problemas com os valores durante o processamento.
+        RuntimeError: Para erros gerais durante o pipeline de transformação.
     """
     try:
         logger.info(f"Carregando dados brutos de: {caminho_bruto}")
@@ -120,8 +123,11 @@ def processar_dados_ipca(
         df_resumo.to_csv(caminho_limpo, index=False, sep=";", encoding="utf-8-sig")
         logger.info(f"Dados limpos salvos com sucesso em: {caminho_limpo}")
 
+    except (FileNotFoundError, KeyError, ValueError) as e:
+        logger.error(f"Erro de validação ou leitura nos dados do IPCA: {e}")
+        raise
     except Exception as e:
-        logger.error(f"Erro crítico no processamento de dados do IPCA: {e}")
+        logger.error(f"Erro crítico e inesperado no processamento de dados do IPCA: {e}")
         raise RuntimeError(f"Falha na transformação de dados: {e}") from e
 
 if __name__ == "__main__":

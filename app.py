@@ -92,6 +92,34 @@ def carregar_dados(caminho: str) -> pd.DataFrame:
 
 df_ipca = carregar_dados(ARQUIVO_LIMPO)
 
+@st.cache_data
+def calcular_metricas_periodo(df: pd.DataFrame) -> tuple:
+    """
+    Calcula as métricas agregadas para o período selecionado de forma performática.
+
+    Args:
+        df (pd.DataFrame): DataFrame filtrado pelos anos selecionados.
+
+    Returns:
+        tuple: Contendo fator_periodo, inflacao_acumulada_periodo, media_mensal_periodo, pico_ano, pico_valor.
+    """
+    if df.empty:
+        return 1.0, 0.0, 0.0, 0, 0.0
+
+    df = df.copy()
+    df["Fator_Interno"] = 1 + (df["Acumulado_Ano"] / 100)
+    fator_periodo = df["Fator_Interno"].prod()
+    inflacao_acumulada_periodo = (fator_periodo - 1) * 100
+
+    media_mensal_periodo = df["Media_Mensal"].mean()
+
+    max_linha = df.loc[df["Acumulado_Ano"].idxmax()]
+    pico_ano = int(max_linha["Ano"])
+    pico_valor = max_linha["Acumulado_Ano"]
+
+    return fator_periodo, inflacao_acumulada_periodo, media_mensal_periodo, pico_ano, pico_valor
+
+
 # 3. INTERFACE DE USUÁRIO (STREAMLIT)
 if df_ipca.empty:
     st.error("Base de dados local não encontrada!")
@@ -156,15 +184,10 @@ else:
         st.markdown("---")
 
         # Calculo dinâmico de inflação acumulada total para o período filtrado
+        fator_periodo, inflacao_acumulada_periodo, media_mensal_periodo, pico_ano, pico_valor = calcular_metricas_periodo(df_filtrado)
+        
+        # Recria coluna para os gráficos subsequentes (fora do cache)
         df_filtrado["Fator_Interno"] = 1 + (df_filtrado["Acumulado_Ano"] / 100)
-        fator_periodo = df_filtrado["Fator_Interno"].prod()
-        inflacao_acumulada_periodo = (fator_periodo - 1) * 100
-        
-        media_mensal_periodo = df_filtrado["Media_Mensal"].mean()
-        
-        max_linha = df_filtrado.loc[df_filtrado["Acumulado_Ano"].idxmax()]
-        pico_ano = int(max_linha["Ano"])
-        pico_valor = max_linha["Acumulado_Ano"]
 
         # KPIs (Hero Section)
         col1, col2, col3 = st.columns(3)
