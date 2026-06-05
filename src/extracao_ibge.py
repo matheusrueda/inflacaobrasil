@@ -1,40 +1,61 @@
+# flake8: noqa: E501
 import os
 import sys
 import logging
 import pandas as pd
 import requests
 import sidrapy
-import requests
 import json
+import contextlib
+import functools
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type, RetryError
 
 # Configura o logging para acompanhamento do processo
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-def verificar_conectividade_ibge(timeout: float = 3.0) -> bool:
-    """
-    Verifica a conectividade rápida com o servidor da API SIDRA do IBGE.
 
-    Parameters
-    ----------
-    timeout : float
-        Limite de tempo para resposta em segundos (padrão: 3.0).
+@contextlib.contextmanager
+def enforce_timeout(connect_timeout=3.0, read_timeout=15.0):
+    _original_request = requests.Session.request
 
-    Returns
-    -------
-    bool
-        True se a conexão for estabelecida com sucesso, False caso contrário.
-    """
+    @functools.wraps(_original_request)
+    def request_with_timeout(self, method, url, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = (connect_timeout, read_timeout)
+        return _original_request(self, method, url, **kwargs)
+
+    requests.Session.request = request_with_timeout
     try:
-        requests.get("https://apisidra.ibge.gov.br", timeout=timeout)
-        return True
-    except Exception:
-        return False
+        yield
+    finally:
+        requests.Session.request = _original_request
+
+
+@retry(
+    retry=retry_if_exception_type(
+        (requests.exceptions.Timeout,
+         requests.exceptions.ConnectionError)),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    stop=stop_after_attempt(3)
+)
+def buscar_dados_ibge(tabela, variavel, periodo,
+                      nivel_territorial, codigo_territorial):
+    with enforce_timeout(3.0, 15.0):
+        return sidrapy.get_table(
+            table_code=tabela,
+            variable=variavel,
+            period=periodo,
+            territorial_level=nivel_territorial,
+            ibge_territorial_code=codigo_territorial
+        )
 
 
 def obter_dados_fallback() -> pd.DataFrame:
     """
-    Retorna um DataFrame simulando a estrutura original do SIDRA/IBGE 
+    Retorna um DataFrame simulando a estrutura original do SIDRA/IBGE
     com dados históricos de IPCA consolidados.
 
     Returns:
@@ -53,8 +74,10 @@ def obter_dados_fallback() -> pd.DataFrame:
 
     df = pd.DataFrame(dados_offline)
     df = df[["D1C", "V"]]
-    logger.info("Dados de fallback off-line gerados com sucesso através de compressão lógica.")
+    logger.info(
+        "Dados de fallback off-line gerados com sucesso através de compressão lógica.")
     return df
+
 
 def extrair_dados_ipca(
     tabela: str = "1737",
@@ -68,38 +91,35 @@ def extrair_dados_ipca(
     Em caso de falha de conexão ou timeout, aciona automaticamente o fallback offline.
 
     Args:
-        tabela (str): O código da tabela no SIDRA (padrão: "1737" para o IPCA).
-        variavel (str): A variável a ser extraída (padrão: "63" para variação mensal).
-        periodo (str): O período a ser consultado (padrão: "last144" para os últimos 144 meses).
-        nivel_territorial (str): Nível territorial da consulta (padrão: "1" para Brasil).
-        codigo_territorial (str): Código territorial específico (padrão: "all" para todos).
+        tabela (str): O código da tabela no SIDRA (padrão: "1737").
+        variavel (str): A variável a ser extraída (padrão: "63").
+        periodo (str): O período a ser consultado (padrão: "last144").
+        nivel_territorial (str): Nível territorial (padrão: "1").
+        codigo_territorial (str): Código territorial (padrão: "all").
 
     Returns:
         pd.DataFrame: DataFrame contendo a tabela bruta (via API ou via fallback).
     """
     try:
-        logger.info("Testando conectividade com o servidor do IBGE...")
-        if not verificar_conectividade_ibge(timeout=3.0):
-            raise ConnectionError("O servidor da API SIDRA do IBGE está inacessível ou sem resposta rápida.")
-
         logger.info(
             f"Tentando extração da tabela {tabela}, variável {variavel} para o período {periodo}..."
         )
-        df_raw = sidrapy.get_table(
-            table_code=tabela,
-            variable=variavel,
-            period=periodo,
-            territorial_level=nivel_territorial,
-            ibge_territorial_code=codigo_territorial
+        df_raw = buscar_dados_ibge(
+            tabela=tabela,
+            variavel=variavel,
+            periodo=periodo,
+            nivel_territorial=nivel_territorial,
+            codigo_territorial=codigo_territorial
         )
-        
+
         if df_raw is None or df_raw.empty:
-            raise ValueError("A API do IBGE retornou um DataFrame vazio ou nulo.")
-            
+            raise ValueError(
+                "A API do IBGE retornou um DataFrame vazio ou nulo.")
+
         logger.info("Extração de dados brutos via API concluída com sucesso.")
         return df_raw
-        
-    except (requests.exceptions.RequestException, json.decoder.JSONDecodeError) as e:
+
+    except (requests.exceptions.RequestException, json.decoder.JSONDecodeError, RetryError) as e:
         logger.warning(
             f"Erro de rede ou decodificação na API do IBGE: {e}. "
             "Iniciando fallback robusto com dados locais pré-processados."
@@ -112,7 +132,9 @@ def extrair_dados_ipca(
         )
         return obter_dados_fallback()
 
-def salvar_dados_brutos(df: pd.DataFrame, caminho_destino: str = "data/ipca_bruto.csv") -> None:
+
+def salvar_dados_brutos(df: pd.DataFrame,
+                        caminho_destino: str = "data/ipca_bruto.csv") -> None:
     """
     Salva o DataFrame de dados brutos em um arquivo CSV.
 
@@ -127,14 +149,15 @@ def salvar_dados_brutos(df: pd.DataFrame, caminho_destino: str = "data/ipca_brut
         diretorio = os.path.dirname(caminho_destino)
         if diretorio:
             os.makedirs(diretorio, exist_ok=True)
-            
+
         # Salva o arquivo CSV
         df.to_csv(caminho_destino, index=False, encoding="utf-8")
         logger.info(f"Dados brutos salvos com sucesso em: {caminho_destino}")
-        
+
     except Exception as e:
         logger.error(f"Erro ao salvar arquivo de dados brutos: {e}")
         raise IOError(f"Falha na escrita do arquivo CSV: {e}") from e
+
 
 if __name__ == "__main__":
     try:
