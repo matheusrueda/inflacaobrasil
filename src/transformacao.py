@@ -73,23 +73,29 @@ def processar_dados_ipca(
         df["Fator"] = 1 + (df["Inflacao_Mensal"] / 100)
 
         logger.info("Realizando consolidação anual e cálculo de fatores compostos...")
-        resumo_anual = []
-        for ano, group in df.groupby("Ano"):
-            # Ignora anos incompletos na base de dados (precisa de exatamente 12 meses)
-            if len(group) < 12:
-                logger.info(f"Ignorando o ano {ano} por conter apenas {len(group)} meses.")
-                continue
-                
-            media_mensal_ano = group["Inflacao_Mensal"].mean()
-            acumulado_ano = (group["Fator"].prod() - 1) * 100
-            
-            resumo_anual.append({
-                "Ano": int(ano),
-                "Media_Mensal": round(media_mensal_ano, 4),
-                "Acumulado_Ano": round(acumulado_ano, 4)
-            })
 
-        df_resumo = pd.DataFrame(resumo_anual)
+        # Filtra anos incompletos de forma vetorizada
+        counts = df.groupby("Ano")["Codigo_Mes"].transform("count")
+        anos_ignorados = df[counts != 12]["Ano"].unique()
+
+        if len(anos_ignorados) > 0:
+            logger.info(f"Anos ignorados por conterem dados incompletos: {list(anos_ignorados)}")
+
+        df_valido = df[counts == 12]
+
+        # Agregação vetorizada
+        df_resumo = df_valido.groupby("Ano").agg(
+            Media_Mensal=("Inflacao_Mensal", "mean"),
+            Fator_Prod=("Fator", "prod")
+        ).reset_index()
+
+        # Calcula o acumulado anual
+        df_resumo["Acumulado_Ano"] = (df_resumo["Fator_Prod"] - 1) * 100
+
+        # Formatação e seleção das colunas desejadas para igualar ao comportamento original
+        df_resumo["Media_Mensal"] = df_resumo["Media_Mensal"].round(4)
+        df_resumo["Acumulado_Ano"] = df_resumo["Acumulado_Ano"].round(4)
+        df_resumo = df_resumo[["Ano", "Media_Mensal", "Acumulado_Ano"]]
         
         if df_resumo.empty:
             raise ValueError("Nenhum ano completo (com 12 meses) foi encontrado para processamento.")
