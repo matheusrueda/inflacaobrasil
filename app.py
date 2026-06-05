@@ -4,16 +4,35 @@ import plotly.express as px
 import plotly.graph_objects as go
 import os
 
-# 1. CONFIGURAÇÃO DA PÁGINA E ESTILOS
-st.set_page_config(
-    page_title="Análise de Inflação - IPCA",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
-# Estilização CSS para visual limpo e legível (Dark Mode adaptado com Fira Code nos números)
-st.markdown("""
+# Constantes globais para otimização de performance
+VALORES_EXEMPLO = {
+    "Customizado (R$ 100)": 100.0,
+    "Cafezinho Simples (R$ 3,50)": 3.50,
+    "Almoço Comercial (R$ 25,00)": 25.0,
+    "Cesta Básica Familiar (R$ 400,00)": 400.0,
+    "Salário Mínimo de 2016 (R$ 880,00)": 880.0
+}
+OPCOES_EXEMPLO = list(VALORES_EXEMPLO.keys())
+
+
+INTRODUCAO_MD = """Quando falamos sobre a variação da inflação (IPCA), estamos olhando para a forma como o dinheiro que ganhamos perde poder de compra ao longo do tempo. Este painel foi construído de forma acadêmica para nos ajudar a compreender como a inflação se comportou ano a ano e o efeito cumulativo composto desse aumento no bolso do brasileiro."""
+SIMULADOR_MD = """<div class='simulador-card'>
+<p style='margin-top:0; color:#f3f4f6; font-size:1rem; font-weight:600;'>
+Simulador Prático de Perda de Poder de Compra
+</p>
+<p style='color:#94a3b8; font-size:0.9rem; margin-bottom:15px; line-height:1.5;'>
+Insira um valor em dinheiro no início do período filtrado. O simulador calculará o quanto seria equivalente hoje, demonstrando visualmente o efeito da corrosão inflacionária.
+</p>
+</div>"""
+
+
+TITLE_BAR = "<p style='font-weight: 700; font-size: 1.15rem; color: #f3f4f6; margin-bottom: 15px;'>Inflação Oficial Registrada Ano a Ano</p>"
+TITLE_AREA = "<p style='font-weight: 700; font-size: 1.15rem; color: #f3f4f6; margin-bottom: 15px;'>Trajetória da Inflação Composta no Período</p>"
+TITLE_TABLE = "<p style='font-weight: 700; font-size: 1.15rem; color: #f3f4f6; margin-bottom: 15px;'>Tabela de Dados Consolidados</p>"
+HR_STYLE = "<hr style='border: 0; height: 1px; background: rgba(255,255,255,0.05); margin-top: 25px; margin-bottom: 25px;'>"
+
+CSS_STYLES = """
     <style>
         /* Ajuste de fontes globais no app */
         html, body, [class*="css"], .stMarkdown {
@@ -66,7 +85,56 @@ st.markdown("""
         footer {visibility: hidden;}
         header {background: transparent !important;}
     </style>
-""", unsafe_allow_html=True)
+"""
+
+
+ANALISE_HISTORICA_MD = """
+            <div style="background-color: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); padding: 25px; border-radius: 14px; margin-top: 10px;">
+                <h4 style="margin-top:0; color:#2563eb; font-weight:800; font-size:1.25rem;">Entendendo o Comportamento Inflacionário Recente</h4>
+                <p style="margin-bottom:20px; font-size: 0.95rem; color:#94a3b8; line-height:1.6;">
+                    A inflação brasileira é muito influenciada por eventos de grande escala, climáticos e geopolíticos. A seguir, explicamos de forma simples os três momentos mais marcantes da última década:
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="background: rgba(255, 255, 255, 0.01); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.03);">
+                        <strong style="color:#f3f4f6; font-size:0.95rem;">
+                            <span style="color:#db2777; margin-right:8px;">●</span>Ajuste Econômico e Tarifas (2016)
+                        </strong>
+                        <p style="margin: 5px 0 0 0; font-size:0.88rem; color:#94a3b8; line-height:1.5;">
+                            O ano de 2016 iniciou-se sob o reflexo da recessão econômica de 2015 e do forte realinhamento de preços administrados. Tarifas públicas como a conta de luz e o preço do combustível precisaram ser reajustadas de forma acentuada, mantendo o IPCA em um nível elevado de 6.29%.
+                        </p>
+                    </div>
+                    <div style="background: rgba(255, 255, 255, 0.01); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.03);">
+                        <strong style="color:#f3f4f6; font-size:0.95rem;">
+                            <span style="color:#2563eb; margin-right:8px;">●</span>Pandemia e Desorganização Global (2021)
+                        </strong>
+                        <p style="margin: 5px 0 0 0; font-size:0.88rem; color:#94a3b8; line-height:1.5;">
+                            A inflação atingiu dois dígitos (10.03%) em 2021. As restrições de saúde no mundo todo paralisaram fábricas e portos, gerando escassez de componentes essenciais e encarecendo drasticamente o valor do frete internacional. No Brasil, o desequilíbrio na taxa de câmbio acelerou o encarecimento dos alimentos e produtos essenciais.
+                        </p>
+                    </div>
+                    <div style="background: rgba(255, 255, 255, 0.01); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.03);">
+                        <strong style="color:#f3f4f6; font-size:0.95rem;">
+                            <span style="color:#10b981; margin-right:8px;">●</span>Conflitos Geopolíticos e Alimentos (2022)
+                        </strong>
+                        <p style="margin: 5px 0 0 0; font-size:0.88rem; color:#94a3b8; line-height:1.5;">
+                            Em 2022 a inflação fechou em 5.79%, sendo puxada fortemente pelo choque internacional decorrente do conflito armado na Ucrânia. O evento disparou o preço do petróleo e de insumos fundamentais (como fertilizantes e trigo). A inflação só não foi maior devido à redução emergencial de impostos federais e estaduais sobre energia e combustíveis.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            """
+
+
+
+# 1. CONFIGURAÇÃO DA PÁGINA E ESTILOS
+st.set_page_config(
+    page_title="Análise de Inflação - IPCA",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Estilização CSS para visual limpo e legível (Dark Mode adaptado com Fira Code nos números)
+st.markdown(CSS_STYLES, unsafe_allow_html=True)
 
 ARQUIVO_LIMPO = "data/ipca_limpo.csv"
 
@@ -176,11 +244,7 @@ else:
 
         # Cabeçalho Principal (Storytelling Humano)
         st.title("Inflação Acumulada e o Custo de Vida no Brasil")
-        st.markdown(
-            "Quando falamos sobre a variação da inflação (IPCA), estamos olhando para a forma como o dinheiro que ganhamos "
-            "perde poder de compra ao longo do tempo. Este painel foi construído de forma acadêmica para nos ajudar a compreender "
-            "como a inflação se comportou ano a ano e o efeito cumulativo composto desse aumento no bolso do brasileiro."
-        )
+        st.markdown(INTRODUCAO_MD)
         st.markdown("---")
 
         # Calculo dinâmico de inflação acumulada total para o período filtrado
@@ -215,43 +279,17 @@ else:
         # SEÇÃO NOVA: SIMULADOR DE PODER DE COMPRA
         st.markdown("### O Impacto da Inflação no seu Bolso")
         
-        st.markdown(
-            "<div class='simulador-card'>"
-            "<p style='margin-top:0; color:#f3f4f6; font-size:1rem; font-weight:600;'>"
-            "Simulador Prático de Perda de Poder de Compra"
-            "</p>"
-            "<p style='color:#94a3b8; font-size:0.9rem; margin-bottom:15px; line-height:1.5;'>"
-            "Insira um valor em dinheiro no início do período filtrado. O simulador calculará "
-            "o quanto seria equivalente hoje, "
-            "demonstrando visualmente o efeito da corrosão inflacionária."
-            "</p>"
-            "</div>",
-            unsafe_allow_html=True
-        )
+        st.markdown(SIMULADOR_MD, unsafe_allow_html=True)
         
         # Caixas do simulador lado a lado
         s_col1, s_col2 = st.columns([1.2, 1.8])
         with s_col1:
             exemplo_selecionado = st.selectbox(
                 "Escolha um exemplo real:",
-                options=[
-                    "Customizado (R$ 100)",
-                    "Cafezinho Simples (R$ 3,50)",
-                    "Almoço Comercial (R$ 25,00)",
-                    "Cesta Básica Familiar (R$ 400,00)",
-                    "Salário Mínimo de 2016 (R$ 880,00)"
-                ]
+                options=OPCOES_EXEMPLO
             )
             
-            valores_exemplo = {
-                "Customizado (R$ 100)": 100.0,
-                "Cafezinho Simples (R$ 3,50)": 3.50,
-                "Almoço Comercial (R$ 25,00)": 25.0,
-                "Cesta Básica Familiar (R$ 400,00)": 400.0,
-                "Salário Mínimo de 2016 (R$ 880,00)": 880.0
-            }
-            
-            valor_base = valores_exemplo[exemplo_selecionado]
+            valor_base = VALORES_EXEMPLO[exemplo_selecionado]
             
             valor_original = st.number_input(
                 "Ou digite outro valor (R$):",
@@ -290,7 +328,7 @@ else:
                 unsafe_allow_html=True
             )
 
-        st.markdown("<hr style='border: 0; height: 1px; background: rgba(255,255,255,0.05); margin-top: 25px; margin-bottom: 25px;'>", unsafe_allow_html=True)
+        st.markdown(HR_STYLE, unsafe_allow_html=True)
 
         # Abas
         tab_graficos, tab_tabela, tab_analise = st.tabs([
@@ -304,7 +342,7 @@ else:
             g_col1, g_col2 = st.columns(2)
 
             with g_col1:
-                st.markdown("<p style='font-weight: 700; font-size: 1.15rem; color: #f3f4f6; margin-bottom: 15px;'>Inflação Oficial Registrada Ano a Ano</p>", unsafe_allow_html=True)
+                st.markdown(TITLE_BAR, unsafe_allow_html=True)
                 
                 # Gráfico de Barras Plotly
                 fig_bar = px.bar(
@@ -343,7 +381,7 @@ else:
                 st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
             with g_col2:
-                st.markdown("<p style='font-weight: 700; font-size: 1.15rem; color: #f3f4f6; margin-bottom: 15px;'>Trajetória da Inflação Composta no Período</p>", unsafe_allow_html=True)
+                st.markdown(TITLE_AREA, unsafe_allow_html=True)
                 
                 # Gráfico de Linha / Área para Trajetória Composta
                 df_filtrado["Trajetoria_Composta"] = (df_filtrado["Fator_Interno"].cumprod() - 1) * 100
@@ -395,7 +433,7 @@ else:
                 st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
 
         with tab_tabela:
-            st.markdown("<p style='font-weight: 700; font-size: 1.15rem; color: #f3f4f6; margin-bottom: 15px;'>Tabela de Dados Consolidados</p>", unsafe_allow_html=True)
+            st.markdown(TITLE_TABLE, unsafe_allow_html=True)
             
             df_tabela = df_filtrado.copy()
             df_tabela["Ano"] = df_tabela["Ano"].astype(str)
@@ -423,37 +461,4 @@ else:
 
         with tab_analise:
             # Análise Histórica Contextual formatada
-            st.markdown("""
-            <div style="background-color: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); padding: 25px; border-radius: 14px; margin-top: 10px;">
-                <h4 style="margin-top:0; color:#2563eb; font-weight:800; font-size:1.25rem;">Entendendo o Comportamento Inflacionário Recente</h4>
-                <p style="margin-bottom:20px; font-size: 0.95rem; color:#94a3b8; line-height:1.6;">
-                    A inflação brasileira é muito influenciada por eventos de grande escala, climáticos e geopolíticos. A seguir, explicamos de forma simples os três momentos mais marcantes da última década:
-                </p>
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    <div style="background: rgba(255, 255, 255, 0.01); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.03);">
-                        <strong style="color:#f3f4f6; font-size:0.95rem;">
-                            <span style="color:#db2777; margin-right:8px;">●</span>Ajuste Econômico e Tarifas (2016)
-                        </strong>
-                        <p style="margin: 5px 0 0 0; font-size:0.88rem; color:#94a3b8; line-height:1.5;">
-                            O ano de 2016 iniciou-se sob o reflexo da recessão econômica de 2015 e do forte realinhamento de preços administrados. Tarifas públicas como a conta de luz e o preço do combustível precisaram ser reajustadas de forma acentuada, mantendo o IPCA em um nível elevado de 6.29%.
-                        </p>
-                    </div>
-                    <div style="background: rgba(255, 255, 255, 0.01); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.03);">
-                        <strong style="color:#f3f4f6; font-size:0.95rem;">
-                            <span style="color:#2563eb; margin-right:8px;">●</span>Pandemia e Desorganização Global (2021)
-                        </strong>
-                        <p style="margin: 5px 0 0 0; font-size:0.88rem; color:#94a3b8; line-height:1.5;">
-                            A inflação atingiu dois dígitos (10.03%) em 2021. As restrições de saúde no mundo todo paralisaram fábricas e portos, gerando escassez de componentes essenciais e encarecendo drasticamente o valor do frete internacional. No Brasil, o desequilíbrio na taxa de câmbio acelerou o encarecimento dos alimentos e produtos essenciais.
-                        </p>
-                    </div>
-                    <div style="background: rgba(255, 255, 255, 0.01); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.03);">
-                        <strong style="color:#f3f4f6; font-size:0.95rem;">
-                            <span style="color:#10b981; margin-right:8px;">●</span>Conflitos Geopolíticos e Alimentos (2022)
-                        </strong>
-                        <p style="margin: 5px 0 0 0; font-size:0.88rem; color:#94a3b8; line-height:1.5;">
-                            Em 2022 a inflação fechou em 5.79%, sendo puxada fortemente pelo choque internacional decorrente do conflito armado na Ucrânia. O evento disparou o preço do petróleo e de insumos fundamentais (como fertilizantes e trigo). A inflação só não foi maior devido à redução emergencial de impostos federais e estaduais sobre energia e combustíveis.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(ANALISE_HISTORICA_MD, unsafe_allow_html=True)
