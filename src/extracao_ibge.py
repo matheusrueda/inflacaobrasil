@@ -8,12 +8,18 @@ import sidrapy
 import json
 import contextlib
 import functools
-from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type, RetryError
+from tenacity import (
+    retry,
+    wait_exponential,
+    stop_after_attempt,
+    retry_if_exception_type,
+    RetryError,
+)
 
 # Configura o logging para acompanhamento do processo
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s")
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -36,20 +42,19 @@ def enforce_timeout(connect_timeout=3.0, read_timeout=15.0):
 
 @retry(
     retry=retry_if_exception_type(
-        (requests.exceptions.Timeout,
-         requests.exceptions.ConnectionError)),
+        (requests.exceptions.Timeout, requests.exceptions.ConnectionError)
+    ),
     wait=wait_exponential(multiplier=1, min=2, max=30),
-    stop=stop_after_attempt(3)
+    stop=stop_after_attempt(3),
 )
-def buscar_dados_ibge(tabela, variavel, periodo,
-                      nivel_territorial, codigo_territorial):
+def buscar_dados_ibge(tabela, variavel, periodo, nivel_territorial, codigo_territorial):
     with enforce_timeout(3.0, 15.0):
         return sidrapy.get_table(
             table_code=tabela,
             variable=variavel,
             period=periodo,
             territorial_level=nivel_territorial,
-            ibge_territorial_code=codigo_territorial
+            ibge_territorial_code=codigo_territorial,
         )
 
 
@@ -63,8 +68,16 @@ def obter_dados_fallback() -> pd.DataFrame:
                       contendo colunas 'D1C' (Mês) e 'V' (Valor).
     """
     valores_anuais = {
-        2016: "0.51", 2017: "0.24", 2018: "0.31", 2019: "0.35", 2020: "0.37",
-        2021: "0.80", 2022: "0.47", 2023: "0.38", 2024: "0.39", 2025: "0.35"
+        2016: "0.51",
+        2017: "0.24",
+        2018: "0.31",
+        2019: "0.35",
+        2020: "0.37",
+        2021: "0.80",
+        2022: "0.47",
+        2023: "0.38",
+        2024: "0.39",
+        2025: "0.35",
     }
 
     dados_offline = [{"D1C": "Mês (Código)", "V": "Valor"}]
@@ -75,7 +88,8 @@ def obter_dados_fallback() -> pd.DataFrame:
     df = pd.DataFrame(dados_offline)
     df = df[["D1C", "V"]]
     logger.info(
-        "Dados de fallback off-line gerados com sucesso através de compressão lógica.")
+        "Dados de fallback off-line gerados com sucesso através de compressão lógica."
+    )
     return df
 
 
@@ -84,7 +98,7 @@ def extrair_dados_ipca(
     variavel: str = "63",
     periodo: str = "last144",
     nivel_territorial: str = "1",
-    codigo_territorial: str = "all"
+    codigo_territorial: str = "all",
 ) -> pd.DataFrame:
     """
     Busca os dados brutos da inflação (IPCA) diretamente da API SIDRA do IBGE.
@@ -109,17 +123,20 @@ def extrair_dados_ipca(
             variavel=variavel,
             periodo=periodo,
             nivel_territorial=nivel_territorial,
-            codigo_territorial=codigo_territorial
+            codigo_territorial=codigo_territorial,
         )
 
         if df_raw is None or df_raw.empty:
-            raise ValueError(
-                "A API do IBGE retornou um DataFrame vazio ou nulo.")
+            raise ValueError("A API do IBGE retornou um DataFrame vazio ou nulo.")
 
         logger.info("Extração de dados brutos via API concluída com sucesso.")
         return df_raw
 
-    except (requests.exceptions.RequestException, json.decoder.JSONDecodeError, RetryError) as e:
+    except (
+        requests.exceptions.RequestException,
+        json.decoder.JSONDecodeError,
+        RetryError,
+    ) as e:
         logger.warning(
             f"Erro de rede ou decodificação na API do IBGE: {e}. "
             "Iniciando fallback robusto com dados locais pré-processados."
@@ -133,8 +150,9 @@ def extrair_dados_ipca(
         return obter_dados_fallback()
 
 
-def salvar_dados_brutos(df: pd.DataFrame,
-                        caminho_destino: str = "data/ipca_bruto.csv") -> None:
+def salvar_dados_brutos(
+    df: pd.DataFrame, caminho_destino: str = "data/ipca_bruto.csv"
+) -> None:
     """
     Salva o DataFrame de dados brutos em um arquivo CSV.
 
