@@ -93,6 +93,30 @@ def obter_dados_fallback() -> pd.DataFrame:
     return df
 
 
+def _executar_chamada_api_ibge(
+    tabela: str,
+    variavel: str,
+    periodo: str,
+    nivel_territorial: str,
+    codigo_territorial: str
+) -> pd.DataFrame:
+    """
+    Executa a chamada a API do IBGE e valida o retorno.
+    """
+    df_raw = buscar_dados_ibge(
+        tabela=tabela,
+        variavel=variavel,
+        periodo=periodo,
+        nivel_territorial=nivel_territorial,
+        codigo_territorial=codigo_territorial,
+    )
+
+    if df_raw is None or df_raw.empty:
+        raise ValueError("A API do IBGE retornou um DataFrame vazio ou nulo.")
+
+    return df_raw
+
+
 def extrair_dados_ipca(
     tabela: str = "1737",
     variavel: str = "63",
@@ -118,35 +142,31 @@ def extrair_dados_ipca(
         logger.info(
             f"Tentando extração da tabela {tabela}, variável {variavel} para o período {periodo}..."
         )
-        df_raw = buscar_dados_ibge(
-            tabela=tabela,
-            variavel=variavel,
-            periodo=periodo,
-            nivel_territorial=nivel_territorial,
-            codigo_territorial=codigo_territorial,
+        df_raw = _executar_chamada_api_ibge(
+            tabela, variavel, periodo, nivel_territorial, codigo_territorial
         )
-
-        if df_raw is None or df_raw.empty:
-            raise ValueError("A API do IBGE retornou um DataFrame vazio ou nulo.")
-
         logger.info("Extração de dados brutos via API concluída com sucesso.")
         return df_raw
 
-    except (
-        requests.exceptions.RequestException,
-        json.decoder.JSONDecodeError,
-        RetryError,
-    ) as e:
-        logger.warning(
-            f"Erro de rede ou decodificação na API do IBGE: {e}. "
-            "Iniciando fallback robusto com dados locais pré-processados."
-        )
-        return obter_dados_fallback()
     except Exception as e:
-        logger.warning(
-            f"Erro inesperado na requisição à API do IBGE: {e}. "
-            "Iniciando fallback robusto com dados locais pré-processados."
-        )
+        if isinstance(
+            e,
+            (
+                requests.exceptions.RequestException,
+                json.decoder.JSONDecodeError,
+                RetryError,
+                ValueError,
+            ),
+        ):
+            logger.warning(
+                f"Erro de rede ou decodificação na API do IBGE: {e}. "
+                "Iniciando fallback robusto com dados locais pré-processados."
+            )
+        else:
+            logger.warning(
+                f"Erro inesperado na requisição à API do IBGE: {e}. "
+                "Iniciando fallback robusto com dados locais pré-processados."
+            )
         return obter_dados_fallback()
 
 
