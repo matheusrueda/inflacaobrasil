@@ -6,6 +6,7 @@ import pandas as pd
 import requests
 import sidrapy
 import json
+import re
 import contextlib
 import functools
 from tenacity import (
@@ -58,10 +59,13 @@ def buscar_dados_ibge(tabela, variavel, periodo, nivel_territorial, codigo_terri
         )
 
 
-def obter_dados_fallback() -> pd.DataFrame:
+def obter_dados_fallback(periodo: str = "last144") -> pd.DataFrame:
     """
     Retorna um DataFrame simulando a estrutura original do SIDRA/IBGE
     com dados históricos de IPCA consolidados.
+
+    Args:
+        periodo (str): O período a ser retornado (padrão: "last144").
 
     Returns:
         pd.DataFrame: DataFrame estruturado com a representação offline do IPCA,
@@ -80,10 +84,21 @@ def obter_dados_fallback() -> pd.DataFrame:
         2025: "0.35",
     }
 
-    dados_offline = [{"D1C": "Mês (Código)", "V": "Valor"}]
+    dados_offline_rows = []
     for ano, valor in valores_anuais.items():
         for mes in range(1, 13):
-            dados_offline.append({"D1C": f"{ano}{mes:02d}", "V": valor})
+            dados_offline_rows.append({"D1C": f"{ano}{mes:02d}", "V": valor})
+
+    match = re.match(r"^last(\d+)$", periodo)
+    if match:
+        num_meses = int(match.group(1))
+        dados_offline_rows = dados_offline_rows[-num_meses:]
+    else:
+        logger.warning(
+            f"Formato de período inesperado '{periodo}' no fallback. Retornando todos os dados disponíveis."
+        )
+
+    dados_offline = [{"D1C": "Mês (Código)", "V": "Valor"}] + dados_offline_rows
 
     df = pd.DataFrame(dados_offline)
     df = df[["D1C", "V"]]
@@ -141,13 +156,13 @@ def extrair_dados_ipca(
             f"Erro de rede ou decodificação na API do IBGE: {e}. "
             "Iniciando fallback robusto com dados locais pré-processados."
         )
-        return obter_dados_fallback()
+        return obter_dados_fallback(periodo=periodo)
     except Exception as e:
         logger.warning(
             f"Erro inesperado na requisição à API do IBGE: {e}. "
             "Iniciando fallback robusto com dados locais pré-processados."
         )
-        return obter_dados_fallback()
+        return obter_dados_fallback(periodo=periodo)
 
 
 def salvar_dados_brutos(
