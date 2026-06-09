@@ -1,0 +1,31 @@
+# Agentes locais
+.agent/
+
+# Ambiente Virtual Python
+.venv/
+venv/
+ENV/
+env/
+
+# Estudos e Testes Locais (Matheus)
+# Painel rodando em https://matheusrueda.github.io/projeto-cd-ed/
+.understand-anything/
+.understandignore
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Cache & Config do Streamlit
+.streamlit/*
+!.streamlit/config.toml
+
+# Metadados do OS
+.DS_Store
+Thumbs.db
+
+# Logs do projeto
+*.log
