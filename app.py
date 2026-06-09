@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-
 # Constantes globais para otimização de performance
 VALORES_EXEMPLO = {
     "Customizado (R$ 100)": 100.0,
@@ -159,6 +158,8 @@ def carregar_dados(caminho: str) -> pd.DataFrame:
 
 
 df_ipca = carregar_dados(ARQUIVO_LIMPO)
+if not df_ipca.empty:
+    df_ipca["Fator_Interno"] = 1 + (df_ipca["Acumulado_Ano"] / 100)
 
 
 @st.cache_data
@@ -176,7 +177,6 @@ def calcular_metricas_periodo(df: pd.DataFrame) -> tuple:
         return 1.0, 0.0, 0.0, 0, 0.0
 
     df = df.copy()
-    df["Fator_Interno"] = 1 + (df["Acumulado_Ano"] / 100)
     fator_periodo = df["Fator_Interno"].prod()
     inflacao_acumulada_periodo = (fator_periodo - 1) * 100
 
@@ -272,9 +272,6 @@ else:
             pico_ano,
             pico_valor,
         ) = calcular_metricas_periodo(df_filtrado)
-
-        # Recria coluna para os gráficos subsequentes (fora do cache)
-        df_filtrado["Fator_Interno"] = 1 + (df_filtrado["Acumulado_Ano"] / 100)
 
         # KPIs (Hero Section)
         col1, col2, col3 = st.columns(3)
