@@ -442,9 +442,7 @@ else:
                         x=df_filtrado["Ano"],
                         y=df_filtrado["Trajetoria_Composta"],
                         mode="markers+text",
-                        text=df_filtrado["Trajetoria_Composta"].apply(
-                            lambda val: f"{val:.1f}%"
-                        ),
+                        text=df_filtrado["Trajetoria_Composta"].round(1).astype(str) + "%",
                         textposition="top center",
                         marker=dict(color="#db2777", size=8),
                         hoverinfo="skip",
