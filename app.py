@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import html
 
 
 # Constantes globais para otimização de performance
@@ -339,12 +340,12 @@ else:
             st.markdown(
                 f"<div style='margin-top: 10px;'>"
                 f"<p style='font-size: 1.05rem; line-height: 1.6; color: #f3f4f6;'>"
-                f"{item_nome} que custava <strong>R$ {valor_original:.2f}</strong> em {ano_inicial}, custaria aproximadamente "
-                f"<span style='color: #db2777; font-weight: 700; font-family: Fira Code;'>R$ {valor_necessario:.2f}</span> em {ano_final} "
+                f"{html.escape(str(item_nome))} que custava <strong>R$ {html.escape(f'{valor_original:.2f}')}</strong> em {html.escape(str(ano_inicial))}, custaria aproximadamente "
+                f"<span style='color: #db2777; font-weight: 700; font-family: Fira Code;'>R$ {html.escape(f'{valor_necessario:.2f}')}</span> em {html.escape(str(ano_final))} "
                 f"para manter exatamente o mesmo padrão de consumo de itens equivalentes."
                 f"</p>"
                 f"<p style='font-size: 0.9rem; color: #94a3b8; margin: 0;'>"
-                f"Isso representa uma <strong>corrosão real de {perda_poder_compra:.1f}% no poder de compra</strong> do Real brasileiro durante este período."
+                f"Isso representa uma <strong>corrosão real de {html.escape(f'{perda_poder_compra:.1f}')}% no poder de compra</strong> do Real brasileiro durante este período."
                 f"</p>"
                 f"</div>",
                 unsafe_allow_html=True,
