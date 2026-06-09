@@ -1,6 +1,5 @@
 # flake8: noqa: E501
 import os
-import sys
 import logging
 import pandas as pd
 import requests
@@ -233,6 +232,7 @@ def salvar_dados_brutos(
 
 
 if __name__ == "__main__":
+    import sys
     try:
         dados = extrair_dados_ipca()
         salvar_dados_brutos(dados)
