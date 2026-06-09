@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-
 # Constantes globais para otimização de performance
 VALORES_EXEMPLO = {
     "Customizado (R$ 100)": 100.0,
@@ -182,9 +181,9 @@ def calcular_metricas_periodo(df: pd.DataFrame) -> tuple:
 
     media_mensal_periodo = df["Media_Mensal"].mean()
 
-    max_linha = df.loc[df["Acumulado_Ano"].idxmax()]
-    pico_ano = int(max_linha["Ano"])
-    pico_valor = max_linha["Acumulado_Ano"]
+    idx_max = df["Acumulado_Ano"].idxmax()
+    pico_ano = int(df.loc[idx_max, "Ano"])
+    pico_valor = df.loc[idx_max, "Acumulado_Ano"]
 
     return (
         fator_periodo,
