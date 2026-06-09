@@ -1,5 +1,4 @@
 import os
-import sys
 import logging
 import pandas as pd
 
@@ -236,6 +235,7 @@ def processar_dados_ipca(
 
 
 if __name__ == "__main__":
+    import sys
     try:
         processar_dados_ipca()
         sys.exit(0)
