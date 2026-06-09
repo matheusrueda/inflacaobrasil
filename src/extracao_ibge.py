@@ -90,10 +90,11 @@ def obter_dados_fallback(periodo: str = "last144") -> pd.DataFrame:
         2025: "0.35",
     }
 
-    dados_offline_rows = []
-    for ano, valor in valores_anuais.items():
-        for mes in range(1, 13):
-            dados_offline_rows.append({"D1C": f"{ano}{mes:02d}", "V": valor})
+    dados_offline_rows = [
+        {"D1C": f"{ano}{mes:02d}", "V": valor}
+        for ano, valor in valores_anuais.items()
+        for mes in range(1, 13)
+    ]
 
     match = re.match(r"^last(\d+)$", periodo)
     if match:
